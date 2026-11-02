@@ -12,6 +12,7 @@ $portalLinks =
         ]
         : [
             ["invigilator_portal.php#scheduled", "Scheduled Duties"],
+            ["invigilator_portal.php#attendance", "Attendance"],
             ["invigilator_portal.php#completed", "Completed Duties"],
         ];
 ?>

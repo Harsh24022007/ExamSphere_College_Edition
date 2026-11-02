@@ -52,8 +52,8 @@ try {
  </article>
  <article class="portal-entry-card">
   <span class="eyebrow">FOR EXAM STAFF</span><h2>Invigilator portal</h2>
-  <p>Sign in to see your assigned exam and room schedule, including your upcoming and completed duties.</p>
-  <div class="portal-entry-actions"><a class="btn primary" href="invigilator_login.php">Invigilator sign in</a></div>
+  <p>Request administrator approval, then claim your account to view assigned duties and record student attendance.</p>
+  <div class="portal-entry-actions"><a class="btn primary" href="invigilator_login.php">Invigilator sign in</a><a href="invigilator_register.php">Request access →</a></div>
  </article>
  <article class="portal-entry-card">
   <span class="eyebrow">FOR EXAM ADMIN</span><h2>Administrator portal</h2>

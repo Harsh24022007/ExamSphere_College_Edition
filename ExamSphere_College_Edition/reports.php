@@ -8,11 +8,15 @@ $exams = $pdo
         "SELECT e.EXAM_ID,e.EXAM_DATE,s.SUBJECT_NAME FROM EXAMINATION e JOIN SUBJECT s ON s.SUBJECT_ID=e.SUBJECT_ID ORDER BY e.EXAM_DATE DESC",
     )
     ->fetchAll();
-$eid = (int) ($_GET["exam_id"] ?? 0);
+$eid = $_GET["exam_id"] ?? "";
+if (!is_string($eid)) {
+    $eid = "";
+}
+$eid = trim($eid);
 $sql =
     "SELECT e.EXAM_ID,e.EXAM_DATE,s.SUBJECT_NAME,d.DEPT_NAME,st.STUDENT_ID,CONCAT_WS(' ',st.FNAME,st.MNAME,st.LNAME) STUDENT_NAME,ra.ROOM_ID,r.BUILDING,ra.SEAT_NO FROM ROOM_ALLOCATION ra JOIN EXAM_REGISTRATION er ON er.REGISTR_ID=ra.REGISTR_ID JOIN EXAMINATION e ON e.EXAM_ID=er.EXAM_ID JOIN SUBJECT s ON s.SUBJECT_ID=e.SUBJECT_ID JOIN DEPARTMENT d ON d.DEPT_ID=s.DEPT_ID JOIN STUDENTS st ON st.STUDENT_ID=er.STUDENT_ID JOIN ROOMS r ON r.ROOM_ID=ra.ROOM_ID";
 $p = [];
-if ($eid) {
+if ($eid !== "" && $eid !== "0") {
     $sql .= " WHERE e.EXAM_ID=?";
     $p[] = $eid;
 }
@@ -22,7 +26,7 @@ $st->execute($p);
 $rows = $st->fetchAll();
 include "partials.php";
 ?>
-<main class="content"><div class="content-title"><div><span class="eyebrow">REPORT CENTER</span><h1>Reports & Exports</h1><p>Generate printable seating plans and spreadsheet-ready reports.</p></div><div class="title-actions"><a class="btn ghost" href="export.php?type=csv&exam_id=<?= $eid ?>">↓ CSV</a><a class="btn primary" href="export.php?type=excel&exam_id=<?= $eid ?>">↓ Excel</a></div></div>
+<main class="content"><div class="content-title"><div><span class="eyebrow">REPORT CENTER</span><h1>Reports & Exports</h1><p>Generate printable seating plans and spreadsheet-ready reports.</p></div><div class="title-actions"><a class="btn ghost" href="export.php?type=csv&amp;exam_id=<?= e($eid) ?>">↓ CSV</a><a class="btn primary" href="export.php?type=excel&amp;exam_id=<?= e($eid) ?>">↓ Excel</a></div></div>
 <section class="panel"><form class="report-filter"><label>Examination<select name="exam_id"><option value="0">All examinations</option><?php foreach (
     $exams
     as $e

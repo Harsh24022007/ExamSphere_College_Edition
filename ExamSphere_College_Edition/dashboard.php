@@ -28,6 +28,14 @@ $room = $pdo
         "SELECT COUNT(*) total,SUM(CASE WHEN STATUS='AVAILABLE' THEN 1 ELSE 0 END) available FROM ROOMS",
     )
     ->fetch();
+$pendingInvigilatorRequests = (int) $pdo
+    ->query("SELECT COUNT(*) FROM INVIGILATOR_REQUEST WHERE STATUS='pending'")
+    ->fetchColumn();
+$attendanceSummary = $pdo
+    ->query(
+        "SELECT e.EXAM_ID,e.EXAM_DATE,e.START_TIME,s.SUBJECT_NAME,d.DEPT_NAME,COUNT(DISTINCT er.REGISTR_ID) registered,COUNT(DISTINCT CASE WHEN LOWER(a.status)='present' THEN er.REGISTR_ID END) present,COUNT(DISTINCT CASE WHEN LOWER(a.status)='absent' THEN er.REGISTR_ID END) absent,COUNT(DISTINCT CASE WHEN er.REGISTR_ID IS NOT NULL AND a.attendance_id IS NULL THEN er.REGISTR_ID END) unmarked FROM EXAMINATION e JOIN SUBJECT s ON s.SUBJECT_ID=e.SUBJECT_ID JOIN DEPARTMENT d ON d.DEPT_ID=s.DEPT_ID LEFT JOIN EXAM_REGISTRATION er ON er.EXAM_ID=e.EXAM_ID LEFT JOIN ROOM_ALLOCATION ra ON ra.REGISTR_ID=er.REGISTR_ID LEFT JOIN attendance a ON a.allocation_id=ra.ALLOCATION_ID WHERE e.EXAM_DATE<CURDATE() OR (e.EXAM_DATE=CURDATE() AND e.START_TIME<=CURTIME()) GROUP BY e.EXAM_ID,e.EXAM_DATE,e.START_TIME,s.SUBJECT_NAME,d.DEPT_NAME ORDER BY e.EXAM_DATE DESC,e.START_TIME DESC LIMIT 6",
+    )
+    ->fetchAll();
 include "partials.php";
 ?>
 <main class="content"><div class="content-title"><div><span class="eyebrow">OVERVIEW</span><h1>Good day, <?= e(
@@ -46,6 +54,7 @@ include "partials.php";
 <a class="dash-card green" href="allocation.php"><span>ALLOCATIONS</span><b><?= $c[
     "ROOM_ALLOCATION"
 ] ?></b><small>Seats assigned</small></a>
+<a class="dash-card blue" href="invigilator_requests.php"><span>INVIGILATOR REQUESTS</span><b><?= $pendingInvigilatorRequests ?></b><small>Awaiting admin review</small></a>
 </div>
 <div class="dash-grid"><section class="panel"><div class="panel-head"><div><h2>Upcoming Examinations</h2><p>Next scheduled examinations</p></div><a href="manage.php?table=EXAMINATION">View all →</a></div><div class="exam-list"><?php
 foreach ($up as $x): ?><div class="exam-row"><div class="date-chip"><b><?= date(
@@ -70,4 +79,11 @@ foreach ($up as $x): ?><div class="exam-row"><div class="date-chip"><b><?= date(
 if (!$up): ?><div class="empty">No upcoming exams.</div><?php endif;
 ?></div></section>
 <section class="panel quick"><div class="panel-head"><div><h2>Quick Actions</h2><p>Common administration tasks</p></div></div>
-<a href="manage.php?table=STUDENTS">＋ Add student <span>→</span></a><a href="manage.php?table=EXAMINATION">＋ Schedule examination <span>→</span></a><a href="allocation.php">▦ Allocate rooms <span>→</span></a><a href="analytics.php">◒ View department analytics <span>→</span></a><a href="reports.php">▤ Generate report <span>→</span></a></section></div></main><?php include "end.php"; ?>
+<a href="invigilator_requests.php">✓ Review invigilator requests <span>→</span></a><a href="manage.php?table=STUDENTS">⌫ Review or delete students <span>→</span></a><a href="manage.php?table=EXAMINATION">＋ Schedule examination <span>→</span></a><a href="allocation.php">▦ Allocate rooms <span>→</span></a><a href="manage.php?table=INVIGILATOR_DUTY">▣ Assign invigilator duties <span>→</span></a><a href="analytics.php">◒ View department analytics <span>→</span></a><a href="reports.php">▤ Generate report <span>→</span></a></section></div>
+<section class="panel"><div class="panel-head"><div><h2>Attendance overview</h2><p>Live joined summary for exams that have started. Attendance is recorded by assigned invigilators.</p></div></div>
+<?php if (!$attendanceSummary): ?><div class="empty">Attendance summaries appear here after examinations begin.</div><?php else: ?><div class="table-wrap"><table><thead><tr><th>Examination</th><th>Date</th><th>Registered</th><th>Present</th><th>Absent</th><th>Not marked</th><th>Present rate</th></tr></thead><tbody><?php foreach ($attendanceSummary as $exam):
+    $rate = (int) $exam["registered"] > 0
+        ? round(((int) $exam["present"] / (int) $exam["registered"]) * 100)
+        : 0;
+    ?><tr><td><b><?= e($exam["SUBJECT_NAME"]) ?></b><small><?= e($exam["DEPT_NAME"]) ?> · Exam #<?= e($exam["EXAM_ID"]) ?></small></td><td><?= e(date("d M Y", strtotime($exam["EXAM_DATE"]))) ?></td><td><?= e($exam["registered"]) ?></td><td><?= e($exam["present"]) ?></td><td><?= e($exam["absent"]) ?></td><td><?= e($exam["unmarked"]) ?></td><td><?= $rate ?>%</td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?></section>
+</main><?php include "end.php"; ?>

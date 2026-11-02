@@ -38,6 +38,12 @@ function navActive($needle)
   <a href="reports.php" class="<?= navActive(
       "reports.php",
   ) ?>"><span>▤</span> Reports & Exports</a>
+  <a href="sql_lab.php" class="<?= navActive(
+      "sql_lab.php",
+  ) ?>"><span>⌘</span> SQL Joins & Aggregates</a>
+  <a href="invigilator_requests.php" class="<?= navActive(
+      "invigilator_requests.php",
+  ) ?>"><span>✓</span> Invigilator Requests</a>
  </nav>
  <div class="side-label">MASTER DATA</div>
  <nav class="side-nav">

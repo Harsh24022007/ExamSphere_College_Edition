@@ -15,11 +15,15 @@ function spreadsheetSafeValue($value): string
     return $isFormula === 1 ? "'" . $value : $value;
 }
 $type = $_GET["type"] ?? "csv";
-$exam = (int) ($_GET["exam_id"] ?? 0);
+$exam = $_GET["exam_id"] ?? "";
+if (!is_string($exam)) {
+    $exam = "";
+}
+$exam = trim($exam);
 $sql =
     "SELECT e.EXAM_ID,e.EXAM_DATE,s.SUBJECT_NAME,d.DEPT_NAME,st.STUDENT_ID,CONCAT_WS(' ',st.FNAME,st.MNAME,st.LNAME) STUDENT_NAME,ra.ROOM_ID,r.BUILDING,ra.SEAT_NO FROM ROOM_ALLOCATION ra JOIN EXAM_REGISTRATION er ON er.REGISTR_ID=ra.REGISTR_ID JOIN EXAMINATION e ON e.EXAM_ID=er.EXAM_ID JOIN SUBJECT s ON s.SUBJECT_ID=e.SUBJECT_ID JOIN DEPARTMENT d ON d.DEPT_ID=s.DEPT_ID JOIN STUDENTS st ON st.STUDENT_ID=er.STUDENT_ID JOIN ROOMS r ON r.ROOM_ID=ra.ROOM_ID";
 $params = [];
-if ($exam) {
+if ($exam !== "" && $exam !== "0") {
     $sql .= " WHERE e.EXAM_ID=?";
     $params[] = $exam;
 }

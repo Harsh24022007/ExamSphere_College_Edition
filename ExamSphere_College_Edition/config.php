@@ -1,10 +1,10 @@
 <?php
 
-define('DB_HOST', getenv('EXAMSPHERE_DB_HOST') ?: '127.0.0.1');
+define('DB_HOST', getenv('EXAMSPHERE_DB_HOST') ?: 'Harsha');
 define('DB_PORT', getenv('EXAMSPHERE_DB_PORT') ?: '3306');
 define('DB_NAME', getenv('EXAMSPHERE_DB_NAME') ?: 'exam_room_allocation_system');
 define('DB_USER', getenv('EXAMSPHERE_DB_USER') ?: 'root');
-define('DB_PASS', getenv('EXAMSPHERE_DB_PASS') ?: '');
+define('DB_PASS', getenv('EXAMSPHERE_DB_PASS') ?: 'RHS@242006');
 
 function db(): PDO
 {
@@ -51,6 +51,14 @@ function start_role_session(string $role): void
         }
         return;
     }
+    ini_set('session.use_strict_mode', '1');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_name(role_session_name($role));
     session_start();
 }

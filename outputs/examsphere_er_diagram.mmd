@@ -1,0 +1,116 @@
+%% ExamSphere — College Edition
+%% Derived from db_setup.sql, auth.sql, migrations, README.md, PROJECT_REPORT.md,
+%% and PHP query/deletion logic. Fresh-install schema is authoritative.
+
+erDiagram
+    DEPARTMENT {
+        INT DEPT_ID PK
+        VARCHAR_100 DEPT_NAME
+    }
+
+    SUBJECT {
+        VARCHAR_50 SUBJECT_ID PK
+        VARCHAR_100 SUBJECT_NAME
+        INT OFFERED_SEMESTER
+        INT DEPT_ID FK
+    }
+
+    STUDENTS {
+        INT STUDENT_ID PK "AUTO_INCREMENT"
+        VARCHAR_50 FNAME
+        VARCHAR_50 MNAME "NULLABLE"
+        VARCHAR_50 LNAME
+        INT CURRENT_SEMESTER
+        INT DEPT_ID FK
+    }
+
+    EXAMINATION {
+        VARCHAR_191 EXAM_ID PK "AUTO SUBJECT + NAME + DATE"
+        VARCHAR_50 SUBJECT_ID FK
+        DATE EXAM_DATE
+        TIME START_TIME
+        TIME END_TIME
+        TINYINT_1 published "DEFAULT 1"
+    }
+
+    ROOMS {
+        VARCHAR_50 ROOM_ID PK
+        VARCHAR_50 BUILDING "NULLABLE"
+        VARCHAR_10 FLOOR "NULLABLE"
+        INT CAPACITY
+        VARCHAR_20 STATUS "DEFAULT AVAILABLE"
+    }
+
+    INVIGILATOR {
+        INT INVIGILATOR_ID PK
+        VARCHAR_100 INVIGILATOR_NAME
+        VARCHAR_20 PHONE "NULLABLE"
+        VARCHAR_100 EMAIL "NULLABLE"
+    }
+
+    EXAM_REGISTRATION {
+        INT REGISTR_ID PK "AUTO_INCREMENT"
+        INT STUDENT_ID FK
+        VARCHAR_191 EXAM_ID FK "ON DELETE CASCADE"
+        DATE REGISTR_DATE
+        VARCHAR UNIQUE_STUDENT_EXAM "UNIQUE STUDENT_ID + EXAM_ID"
+    }
+
+    ROOM_ALLOCATION {
+        INT ALLOCATION_ID PK "AUTO_INCREMENT"
+        INT REGISTR_ID FK "UNIQUE; ON DELETE CASCADE"
+        VARCHAR_50 ROOM_ID FK
+        VARCHAR_10 SEAT_NO
+        VARCHAR UNIQUE_ROOM_SEAT "UNIQUE ROOM_ID + SEAT_NO"
+    }
+
+    INVIGILATOR_DUTY {
+        VARCHAR_300 DUTY_ID PK "COMPOSITE EXAM + INVIGILATOR + ROOM"
+        VARCHAR_191 EXAM_ID FK "ON DELETE CASCADE"
+        INT INVIGILATOR_ID FK
+        VARCHAR_50 ROOM_ID FK
+        VARCHAR UNIQUE_DUTY "UNIQUE EXAM_ID + INVIGILATOR_ID + ROOM_ID"
+    }
+
+    users {
+        INT user_id PK "AUTO_INCREMENT"
+        VARCHAR_60 username UK
+        VARCHAR_255 password_hash
+        VARCHAR_120 full_name
+        VARCHAR_160 email "NULLABLE"
+        VARCHAR_20 role "admin | student | invigilator"
+        INT student_id FK "NULLABLE; UNIQUE"
+        INT invigilator_id FK "NULLABLE; UNIQUE"
+    }
+
+    ADMIN_USERS {
+        INT ADMIN_ID PK "AUTO_INCREMENT"
+        VARCHAR_100 FULL_NAME
+        VARCHAR_50 USERNAME UK
+        VARCHAR_255 PASSWORD_HASH
+        TIMESTAMP CREATED_AT
+    }
+
+    %% Optional extension present in some existing deployments only.
+    %% Its complete CREATE TABLE definition is not supplied in this repository.
+    attendance {
+        INT attendance_id PK "OBSERVED IN PHP"
+        INT allocation_id FK "OBSERVED IN MIGRATION"
+        INT checked_by FK "INFERRED FROM PHP; NULLABLE"
+        VARCHAR OTHER_COLUMNS "NOT DEFINED IN REPOSITORY"
+    }
+
+    DEPARTMENT ||--o{ SUBJECT : "contains"
+    DEPARTMENT ||--o{ STUDENTS : "enrolls"
+    SUBJECT ||--o{ EXAMINATION : "scheduled as"
+    STUDENTS ||--o{ EXAM_REGISTRATION : "submits"
+    EXAMINATION ||--o{ EXAM_REGISTRATION : "accepts"
+    EXAM_REGISTRATION ||--o| ROOM_ALLOCATION : "gets at most one seat"
+    ROOMS ||--o{ ROOM_ALLOCATION : "provides seats"
+    EXAMINATION ||--o{ INVIGILATOR_DUTY : "has duties"
+    INVIGILATOR ||--o{ INVIGILATOR_DUTY : "performs"
+    ROOMS ||--o{ INVIGILATOR_DUTY : "hosts"
+    STUDENTS o|--o| users : "optional student account"
+    INVIGILATOR o|--o| users : "optional staff account"
+    ROOM_ALLOCATION ||--o{ attendance : "may record attendance"
+    users o|--o{ attendance : "may check attendance"

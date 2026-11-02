@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="5600" height="3400" viewBox="0 0 5600 3400"><style>.bg{fill:#fff}.title{font:700 52px Arial;fill:#111}.subtitle{font:22px Arial;fill:#555}.group{fill:none;stroke:#999;stroke-width:2;stroke-dasharray:12 8}.groupTitle{font:700 20px Arial;fill:#555;letter-spacing:2px}.entity{fill:#fff;stroke:#111;stroke-width:5}.entityText{font:700 25px Arial;fill:#111}.sub{font:17px Arial;fill:#555}.diamond{fill:#fff;stroke:#111;stroke-width:5}.rel{font:700 18px Arial;fill:#111}.line{stroke:#111;stroke-width:3;fill:none}.thin{stroke:#555;stroke-width:2;fill:none}.card{font:700 18px Arial;fill:#111}.oval{fill:#fff;stroke:#111;stroke-width:3}.pk{stroke-width:5}.attr{font:16px Arial;fill:#111}.panel{fill:#fafafa;stroke:#111;stroke-width:2}.head{font:700 19px Arial;fill:#111}.body{font:16px Arial;fill:#222}.legend{font:17px Arial;fill:#222}.note{font:15px Arial;fill:#555}</style><rect width="100%" height="100%" class="bg"/>
+<text x="2800" y="65" text-anchor="middle" class="title">EXAMSPHERE — COLLEGE EXAMINATION MANAGEMENT</text>
+<text x="2800" y="100" text-anchor="middle" class="subtitle">Standard Chen ER diagram | single-page formatted layout | black and white</text>
+<rect x="120" y="150" width="5360" height="980" rx="20" class="group"/>
+<text x="145" y="182" text-anchor="start" class="groupTitle">ACADEMIC AND REGISTRATION</text>
+<rect x="120" y="1190" width="5360" height="900" rx="20" class="group"/>
+<text x="145" y="1222" text-anchor="start" class="groupTitle">SEATING AND INVIGILATION</text>
+<rect x="120" y="2300" width="5360" height="900" rx="20" class="group"/>
+<text x="145" y="2332" text-anchor="start" class="groupTitle">ACCOUNTS, ATTENDANCE AND ATTRIBUTE KEY</text>
+<rect x="300" y="430" width="380" height="90" class="entity"/>
+<text x="490" y="483" text-anchor="middle" class="entityText">DEPARTMENT</text>
+<polygon points="900,430 1005,475 900,520 795,475" class="diamond"/>
+<text x="900" y="481" text-anchor="middle" class="rel">OFFERS</text>
+<rect x="1160" y="430" width="390" height="90" class="entity"/>
+<text x="1355" y="483" text-anchor="middle" class="entityText">SUBJECT</text>
+<polygon points="1800,430 1915,475 1800,520 1685,475" class="diamond"/>
+<text x="1800" y="481" text-anchor="middle" class="rel">SCHEDULES</text>
+<rect x="2070" y="430" width="420" height="90" class="entity"/>
+<text x="2280" y="483" text-anchor="middle" class="entityText">EXAMINATION</text>
+<line x1="680" y1="475" x2="795" y2="475" class="line"/>
+<line x1="1005" y1="475" x2="1160" y2="475" class="line"/>
+<text x="735" y="447" text-anchor="middle" class="card">1</text>
+<text x="1080" y="447" text-anchor="middle" class="card">N</text>
+<line x1="1550" y1="475" x2="1685" y2="475" class="line"/>
+<line x1="1915" y1="475" x2="2070" y2="475" class="line"/>
+<text x="1590" y="447" text-anchor="middle" class="card">1</text>
+<text x="2010" y="447" text-anchor="middle" class="card">N</text>
+<rect x="300" y="820" width="380" height="90" class="entity"/>
+<text x="490" y="873" text-anchor="middle" class="entityText">STUDENTS</text>
+<polygon points="900,820 1010,865 900,910 790,865" class="diamond"/>
+<text x="900" y="871" text-anchor="middle" class="rel">REGISTERS</text>
+<rect x="1160" y="820" width="450" height="90" class="entity"/>
+<text x="1385" y="873" text-anchor="middle" class="entityText">EXAM_REGISTRATION</text>
+<polygon points="1900,820 2005,865 1900,910 1795,865" class="diamond"/>
+<text x="1900" y="871" text-anchor="middle" class="rel">ALLOCATED</text>
+<line x1="680" y1="865" x2="790" y2="865" class="line"/>
+<line x1="1010" y1="865" x2="1160" y2="865" class="line"/>
+<line x1="1610" y1="865" x2="1795" y2="865" class="line"/>
+<text x="735" y="837" text-anchor="middle" class="card">1</text>
+<text x="1080" y="837" text-anchor="middle" class="card">N</text>
+<text x="1660" y="837" text-anchor="middle" class="card">1</text>
+<text x="1760" y="837" text-anchor="middle" class="card">0..1</text>
+<polygon points="2280,655 2390,700 2280,745 2170,700" class="diamond"/>
+<text x="2280" y="706" text-anchor="middle" class="rel">ACCEPTS</text>
+<line x1="2280" y1="520" x2="2280" y2="655" class="line"/>
+<line x1="2280" y1="745" x2="1390" y2="820" class="line"/>
+<text x="2310" y="610" text-anchor="middle" class="card">1</text>
+<text x="1780" y="730" text-anchor="middle" class="card">N</text>
+<ellipse cx="300" cy="310" rx="95" ry="27" class="pk oval"/>
+<text x="300" y="315" text-anchor="middle" class="attr">DEPT_ID (PK)</text>
+<line x1="430" y1="430" x2="370" y2="337" class="line"/>
+<ellipse cx="670" cy="310" rx="95" ry="27" class="oval"/>
+<text x="670" y="315" text-anchor="middle" class="attr">DEPT_NAME</text>
+<line x1="550" y1="430" x2="670" y2="337" class="line"/>
+<ellipse cx="1160" cy="310" rx="110" ry="27" class="pk oval"/>
+<text x="1160" y="315" text-anchor="middle" class="attr">SUBJECT_ID (PK)</text>
+<line x1="1300" y1="430" x2="1270" y2="337" class="line"/>
+<ellipse cx="1500" cy="310" rx="95" ry="27" class="oval"/>
+<text x="1500" y="315" text-anchor="middle" class="attr">DEPT_ID (FK)</text>
+<line x1="1450" y1="430" x2="1500" y2="337" class="line"/>
+<ellipse cx="2070" cy="310" rx="95" ry="27" class="pk oval"/>
+<text x="2070" y="315" text-anchor="middle" class="attr">EXAM_ID (PK)</text>
+<line x1="2200" y1="430" x2="2170" y2="337" class="line"/>
+<ellipse cx="2410" cy="310" rx="95" ry="27" class="oval"/>
+<text x="2410" y="315" text-anchor="middle" class="attr">EXAM_DATE</text>
+<line x1="2380" y1="430" x2="2410" y2="337" class="line"/>
+<ellipse cx="300" cy="700" rx="105" ry="27" class="pk oval"/>
+<text x="300" y="705" text-anchor="middle" class="attr">STUDENT_ID (PK)</text>
+<line x1="430" y1="820" x2="400" y2="727" class="line"/>
+<ellipse cx="620" cy="700" rx="90" ry="27" class="oval"/>
+<text x="620" y="705" text-anchor="middle" class="attr">DEPT_ID (FK)</text>
+<line x1="550" y1="820" x2="620" y2="727" class="line"/>
+<ellipse cx="1160" cy="700" rx="110" ry="27" class="pk oval"/>
+<text x="1160" y="705" text-anchor="middle" class="attr">REGISTR_ID (PK)</text>
+<line x1="1300" y1="820" x2="1270" y2="727" class="line"/>
+<ellipse cx="1500" cy="700" rx="95" ry="27" class="oval"/>
+<text x="1500" y="705" text-anchor="middle" class="attr">EXAM_ID (FK)</text>
+<line x1="1510" y1="820" x2="1530" y2="727" class="line"/>
+<rect x="300" y="1530" width="380" height="90" class="entity"/>
+<text x="490" y="1583" text-anchor="middle" class="entityText">ROOMS</text>
+<polygon points="900,1530 1010,1575 900,1620 790,1575" class="diamond"/>
+<text x="900" y="1581" text-anchor="middle" class="rel">USES</text>
+<rect x="1160" y="1530" width="450" height="90" class="entity"/>
+<text x="1385" y="1583" text-anchor="middle" class="entityText">ROOM_ALLOCATION</text>
+<polygon points="1900,1530 2010,1575 1900,1620 1790,1575" class="diamond"/>
+<text x="1900" y="1581" text-anchor="middle" class="rel">DUTY_FOR</text>
+<rect x="2200" y="1530" width="450" height="90" class="entity"/>
+<text x="2425" y="1583" text-anchor="middle" class="entityText">INVIGILATOR_DUTY</text>
+<polygon points="3000,1530 3110,1575 3000,1620 2890,1575" class="diamond"/>
+<text x="3000" y="1581" text-anchor="middle" class="rel">PERFORMS</text>
+<rect x="3300" y="1530" width="420" height="90" class="entity"/>
+<text x="3510" y="1583" text-anchor="middle" class="entityText">INVIGILATOR</text>
+<line x1="680" y1="1575" x2="790" y2="1575" class="line"/>
+<line x1="1010" y1="1575" x2="1160" y2="1575" class="line"/>
+<text x="735" y="1547" text-anchor="middle" class="card">1</text>
+<text x="1080" y="1547" text-anchor="middle" class="card">N</text>
+<line x1="1610" y1="1575" x2="1790" y2="1575" class="line"/>
+<line x1="2010" y1="1575" x2="2200" y2="1575" class="line"/>
+<text x="1650" y="1547" text-anchor="middle" class="card">1</text>
+<text x="2150" y="1547" text-anchor="middle" class="card">N</text>
+<line x1="2650" y1="1575" x2="2890" y2="1575" class="line"/>
+<line x1="3110" y1="1575" x2="3300" y2="1575" class="line"/>
+<text x="2700" y="1547" text-anchor="middle" class="card">N</text>
+<text x="3240" y="1547" text-anchor="middle" class="card">1</text>
+<line x1="2280" y1="520" x2="2280" y2="1450" class="line"/>
+<line x1="2280" y1="1450" x2="2425" y2="1530" class="thin"/>
+<text x="2310" y="1250" text-anchor="middle" class="card">1</text>
+<text x="2460" y="1485" text-anchor="middle" class="card">N</text>
+<line x1="490" y1="1620" x2="490" y2="1810" class="thin"/>
+<line x1="490" y1="1810" x2="2425" y2="1810" class="thin"/>
+<line x1="2425" y1="1810" x2="2425" y2="1620" class="thin"/>
+<text x="520" y="1770" text-anchor="middle" class="card">1</text>
+<text x="2500" y="1770" text-anchor="middle" class="card">N</text>
+<ellipse cx="300" cy="1410" rx="95" ry="27" class="pk oval"/>
+<text x="300" y="1415" text-anchor="middle" class="attr">ROOM_ID (PK)</text>
+<line x1="430" y1="1530" x2="390" y2="1437" class="line"/>
+<ellipse cx="620" cy="1410" rx="85" ry="27" class="oval"/>
+<text x="620" y="1415" text-anchor="middle" class="attr">CAPACITY</text>
+<line x1="550" y1="1530" x2="620" y2="1437" class="line"/>
+<ellipse cx="1160" cy="1410" rx="120" ry="27" class="pk oval"/>
+<text x="1160" y="1415" text-anchor="middle" class="attr">ALLOCATION_ID (PK)</text>
+<line x1="1300" y1="1530" x2="1280" y2="1437" class="line"/>
+<ellipse cx="1510" cy="1410" rx="95" ry="27" class="oval"/>
+<text x="1510" y="1415" text-anchor="middle" class="attr">REGISTR_ID (FK)</text>
+<line x1="1500" y1="1530" x2="1510" y2="1437" class="line"/>
+<ellipse cx="1500" cy="1740" rx="65" ry="27" class="oval"/>
+<text x="1500" y="1745" text-anchor="middle" class="attr">SEAT_NO</text>
+<line x1="1500" y1="1620" x2="1500" y2="1713" class="line"/>
+<ellipse cx="2200" cy="1410" rx="90" ry="27" class="pk oval"/>
+<text x="2200" y="1415" text-anchor="middle" class="attr">DUTY_ID (PK)</text>
+<line x1="2340" y1="1530" x2="2300" y2="1437" class="line"/>
+<ellipse cx="2600" cy="1410" rx="85" ry="27" class="oval"/>
+<text x="2600" y="1415" text-anchor="middle" class="attr">EXAM_ID (FK)</text>
+<line x1="2530" y1="1530" x2="2600" y2="1437" class="line"/>
+<ellipse cx="3300" cy="1410" rx="115" ry="27" class="pk oval"/>
+<text x="3300" y="1415" text-anchor="middle" class="attr">INVIGILATOR_ID (PK)</text>
+<line x1="3450" y1="1530" x2="3420" y2="1437" class="line"/>
+<ellipse cx="3680" cy="1410" rx="95" ry="27" class="oval"/>
+<text x="3680" y="1415" text-anchor="middle" class="attr">CONTACT</text>
+<line x1="3600" y1="1530" x2="3680" y2="1437" class="line"/>
+<rect x="350" y="2580" width="420" height="90" class="entity"/>
+<text x="560" y="2619" text-anchor="middle" class="entityText">users</text>
+<text x="560" y="2650" text-anchor="middle" class="sub">login account</text>
+<polygon points="1050,2580 1160,2625 1050,2670 940,2625" class="diamond"/>
+<text x="1050" y="2631" text-anchor="middle" class="rel">LINKS</text>
+<rect x="1320" y="2580" width="430" height="90" class="entity"/>
+<text x="1535" y="2619" text-anchor="middle" class="entityText">ADMIN_USERS</text>
+<text x="1535" y="2650" text-anchor="middle" class="sub">admin auth</text>
+<rect x="3800" y="2580" width="460" height="90" class="entity"/>
+<text x="4030" y="2619" text-anchor="middle" class="entityText">attendance</text>
+<text x="4030" y="2650" text-anchor="middle" class="sub">optional extension</text>
+<polygon points="3050,2755 3160,2800 3050,2845 2940,2800" class="diamond"/>
+<text x="3050" y="2806" text-anchor="middle" class="rel">CHECKS</text>
+<polygon points="2500,3055 2625,3100 2500,3145 2375,3100" class="diamond"/>
+<text x="2500" y="3106" text-anchor="middle" class="rel">RECORDED_FOR</text>
+<line x1="770" y1="2625" x2="940" y2="2625" class="line"/>
+<line x1="1160" y1="2625" x2="1320" y2="2625" class="line"/>
+<text x="820" y="2597" text-anchor="middle" class="card">0..1</text>
+<text x="1260" y="2597" text-anchor="middle" class="card">0..1</text>
+<line x1="1750" y1="2625" x2="3800" y2="2625" class="line"/>
+<text x="1850" y="2597" text-anchor="middle" class="card">0..1</text>
+<text x="3650" y="2597" text-anchor="middle" class="card">N</text>
+<line x1="770" y1="2670" x2="2940" y2="2800" class="line"/>
+<line x1="3160" y1="2800" x2="4030" y2="2670" class="line"/>
+<text x="1100" y="2740" text-anchor="middle" class="card">0..1</text>
+<text x="3550" y="2760" text-anchor="middle" class="card">N</text>
+<line x1="1380" y1="1620" x2="2375" y2="3100" class="line"/>
+<line x1="2625" y1="3100" x2="4030" y2="2670" class="line"/>
+<text x="1700" y="2100" text-anchor="middle" class="card">1</text>
+<text x="3500" y="3040" text-anchor="middle" class="card">N</text>
+<ellipse cx="350" cy="2460" rx="90" ry="27" class="pk oval"/>
+<text x="350" y="2465" text-anchor="middle" class="attr">user_id (PK)</text>
+<line x1="570" y1="2580" x2="450" y2="2487" class="line"/>
+<ellipse cx="720" cy="2460" rx="75" ry="27" class="oval"/>
+<text x="720" y="2465" text-anchor="middle" class="attr">role</text>
+<line x1="650" y1="2580" x2="720" y2="2487" class="line"/>
+<ellipse cx="1320" cy="2460" rx="95" ry="27" class="pk oval"/>
+<text x="1320" y="2465" text-anchor="middle" class="attr">ADMIN_ID (PK)</text>
+<line x1="1460" y1="2580" x2="1410" y2="2487" class="line"/>
+<ellipse cx="1700" cy="2460" rx="95" ry="27" class="oval"/>
+<text x="1700" y="2465" text-anchor="middle" class="attr">USERNAME</text>
+<line x1="1650" y1="2580" x2="1700" y2="2487" class="line"/>
+<ellipse cx="3800" cy="2460" rx="110" ry="27" class="pk oval"/>
+<text x="3800" y="2465" text-anchor="middle" class="attr">attendance_id (PK)</text>
+<line x1="4000" y1="2580" x2="3900" y2="2487" class="line"/>
+<rect x="300" y="3160" width="1050" height="240" class="panel"/>
+<text x="318" y="3188" text-anchor="start" class="head">OTHER STUDENT FIELDS</text>
+<text x="318" y="3215" text-anchor="start" class="body">FNAME, MNAME, LNAME</text>
+<text x="318" y="3239" text-anchor="start" class="body">CURRENT_SEMESTER</text>
+<text x="318" y="3263" text-anchor="start" class="body">Department foreign key</text>
+<rect x="1450" y="3160" width="1050" height="240" class="panel"/>
+<text x="1468" y="3188" text-anchor="start" class="head">EXAM FIELDS</text>
+<text x="1468" y="3215" text-anchor="start" class="body">START_TIME, END_TIME</text>
+<text x="1468" y="3239" text-anchor="start" class="body">published flag</text>
+<text x="1468" y="3263" text-anchor="start" class="body">Subject foreign key</text>
+<rect x="2600" y="3160" width="1050" height="240" class="panel"/>
+<text x="2618" y="3188" text-anchor="start" class="head">ROOM / DUTY FIELDS</text>
+<text x="2618" y="3215" text-anchor="start" class="body">BUILDING, FLOOR, STATUS</text>
+<text x="2618" y="3239" text-anchor="start" class="body">ROOM_ID / SEAT_NO</text>
+<text x="2618" y="3263" text-anchor="start" class="body">ASSIGNED_ON</text>
+<rect x="3750" y="3160" width="1450" height="240" class="panel"/>
+<text x="3768" y="3188" text-anchor="start" class="head">NOTATION</text>
+<text x="3768" y="3215" text-anchor="start" class="body">Rectangles = entities   Diamonds = relationships</text>
+<text x="3768" y="3239" text-anchor="start" class="body">Ovals = attributes   double outline = primary key</text>
+<text x="3768" y="3263" text-anchor="start" class="body">1 = one   N = many   0..1 = optional one</text>
+<text x="300" y="3440" text-anchor="start" class="note">Attendance is shown as an optional extension because its complete CREATE TABLE definition is not included in db_setup.sql.</text>
+</svg>
