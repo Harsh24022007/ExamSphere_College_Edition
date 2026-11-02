@@ -40,7 +40,7 @@ include "partials.php";
 ?>
 <main class="content"><div class="content-title"><div><span class="eyebrow">OVERVIEW</span><h1>Good day, <?= e(
     explode(" ", admin_name())[0],
-) ?> 👋</h1><p>Here is today's examination management overview.</p></div><div class="title-actions"><a class="btn ghost" href="reports.php">Export reports</a><a class="btn primary" href="seating.php">Open Seating Studio</a></div></div>
+) ?> 👋</h1><p>Here is today's examination management overview.</p></div><div class="title-actions"><a class="btn ghost" href="reports.php">Export reports</a><a class="btn primary" href="sql_lab.php">Exam Operations</a></div></div>
 <div class="dash-cards">
 <a class="dash-card cyan" href="manage.php?table=STUDENTS"><span>STUDENTS</span><b><?= $c[
     "STUDENTS"
@@ -51,9 +51,9 @@ include "partials.php";
 <a class="dash-card violet" href="manage.php?table=ROOMS"><span>ROOMS</span><b><?= $c[
     "ROOMS"
 ] ?></b><small><?= $room["available"] ?? 0 ?> available now</small></a>
-<a class="dash-card green" href="allocation.php"><span>ALLOCATIONS</span><b><?= $c[
+<a class="dash-card green" href="sql_lab.php"><span>ALLOCATIONS</span><b><?= $c[
     "ROOM_ALLOCATION"
-] ?></b><small>Seats assigned</small></a>
+] ?></b><small>Seats assigned · View exam operations</small></a>
 <a class="dash-card blue" href="invigilator_requests.php"><span>INVIGILATOR REQUESTS</span><b><?= $pendingInvigilatorRequests ?></b><small>Awaiting admin review</small></a>
 </div>
 <div class="dash-grid"><section class="panel"><div class="panel-head"><div><h2>Upcoming Examinations</h2><p>Next scheduled examinations</p></div><a href="manage.php?table=EXAMINATION">View all →</a></div><div class="exam-list"><?php
@@ -79,7 +79,7 @@ foreach ($up as $x): ?><div class="exam-row"><div class="date-chip"><b><?= date(
 if (!$up): ?><div class="empty">No upcoming exams.</div><?php endif;
 ?></div></section>
 <section class="panel quick"><div class="panel-head"><div><h2>Quick Actions</h2><p>Common administration tasks</p></div></div>
-<a href="invigilator_requests.php">✓ Review invigilator requests <span>→</span></a><a href="manage.php?table=STUDENTS">⌫ Review or delete students <span>→</span></a><a href="manage.php?table=EXAMINATION">＋ Schedule examination <span>→</span></a><a href="allocation.php">▦ Allocate rooms <span>→</span></a><a href="manage.php?table=INVIGILATOR_DUTY">▣ Assign invigilator duties <span>→</span></a><a href="analytics.php">◒ View department analytics <span>→</span></a><a href="reports.php">▤ Generate report <span>→</span></a></section></div>
+<a href="invigilator_requests.php">✓ Review invigilator requests <span>→</span></a><a href="manage.php?table=STUDENTS">⌫ Review or delete students <span>→</span></a><a href="manage.php?table=EXAMINATION">＋ Schedule examination <span>→</span></a><a href="sql_lab.php">▦ Manage exam readiness, allocation &amp; invigilator duties <span>→</span></a><a href="analytics.php">◒ View department analytics <span>→</span></a><a href="reports.php">▤ Generate report <span>→</span></a></section></div>
 <section class="panel"><div class="panel-head"><div><h2>Attendance overview</h2><p>Live joined summary for exams that have started. Attendance is recorded by assigned invigilators.</p></div></div>
 <?php if (!$attendanceSummary): ?><div class="empty">Attendance summaries appear here after examinations begin.</div><?php else: ?><div class="table-wrap"><table><thead><tr><th>Examination</th><th>Date</th><th>Registered</th><th>Present</th><th>Absent</th><th>Not marked</th><th>Present rate</th></tr></thead><tbody><?php foreach ($attendanceSummary as $exam):
     $rate = (int) $exam["registered"] > 0

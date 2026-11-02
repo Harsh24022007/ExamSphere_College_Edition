@@ -66,7 +66,7 @@ Change or remove the demo account before deploying outside a local development e
 - Automatic allocation that preserves assignments and only uses free seats in available rooms
 - Visual seating plan with drag-and-drop seat moves saved to MySQL
 - Printable reports and CSV / Excel-compatible exports
-- Protected administrator SQL Lab with live, read-only examples for right joins, full outer join emulation, cross joins, self joins, and aggregate functions
+- Administrator Exam Operations dashboard uses joined registration, room, invigilator-duty and attendance data to find unallocated students and rooms needing invigilator coverage, with direct links to fix them
 
 MySQL does not support cascading inserts; dependent records must reference a parent that already exists. The admin forms provide choices from existing parent records and the `db_setup.sql` constraints continue to reject invalid references. Registration records are student-owned and read-only in the admin portal; students create their own registrations after the server rechecks eligibility.
 
@@ -82,7 +82,7 @@ See [PROJECT_REPORT.md](PROJECT_REPORT.md) for the project overview, architectur
 
 ## SQL joins and aggregate demonstrations
 
-The optional [sql_joins_aggregates_demo.sql](sql_joins_aggregates_demo.sql) file contains read-only `SELECT` examples for inner, left, right, MySQL-compatible full outer join emulation, cross, and self joins. It also demonstrates `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP BY`, and `HAVING`, including joined aggregate reports. The file is separate from the PHP controllers and performs no schema or data changes, so it does not affect the running application. Run it with `exam_room_allocation_system` selected in phpMyAdmin or MySQL Workbench.
+The administrator **Exam Operations** page uses joins and aggregates for operational work: it summarizes exam registrations, seat allocation, attendance, room capacity and invigilator coverage, then links directly to the allocation, seating, report and duty-assignment actions. The optional [sql_joins_aggregates_demo.sql](sql_joins_aggregates_demo.sql) file remains available for read-only SQL examples.
 
 ## Database tables
 

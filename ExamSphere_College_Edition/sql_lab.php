@@ -4,104 +4,42 @@ start_role_session("admin");
 require_admin();
 $pdo = db();
 
-/*
- * This page is intentionally read-only. Every statement is a fixed SELECT
- * query against the existing ExamSphere schema; no user input is interpolated.
- */
-$labQueries = [
-    "Right Join" => [
-        "description" => "Shows every room, including rooms without a seat allocation.",
-        "sql" => "SELECT r.ROOM_ID, r.BUILDING, ra.ALLOCATION_ID, ra.SEAT_NO
-                  FROM ROOM_ALLOCATION ra
-                  RIGHT JOIN ROOMS r ON r.ROOM_ID = ra.ROOM_ID
-                  ORDER BY r.ROOM_ID, ra.SEAT_NO",
-    ],
-    "Full Outer Join (MySQL emulation)" => [
-        "description" => "Combines all departments and students, including unmatched records on either side.",
-        "sql" => "SELECT d.DEPT_ID, d.DEPT_NAME, st.STUDENT_ID,
-                         CONCAT_WS(' ', st.FNAME, st.MNAME, st.LNAME) AS STUDENT_NAME
-                  FROM DEPARTMENT d
-                  LEFT JOIN STUDENTS st ON st.DEPT_ID = d.DEPT_ID
-                  UNION ALL
-                  SELECT d.DEPT_ID, d.DEPT_NAME, st.STUDENT_ID,
-                         CONCAT_WS(' ', st.FNAME, st.MNAME, st.LNAME) AS STUDENT_NAME
-                  FROM STUDENTS st
-                  LEFT JOIN DEPARTMENT d ON d.DEPT_ID = st.DEPT_ID
-                  WHERE d.DEPT_ID IS NULL
-                  ORDER BY DEPT_ID, STUDENT_ID",
-    ],
-    "Cross Join" => [
-        "description" => "Creates department/room combinations for planning coverage; output is capped at 20 rows.",
-        "sql" => "SELECT d.DEPT_NAME, r.ROOM_ID, r.BUILDING
-                  FROM DEPARTMENT d
-                  CROSS JOIN ROOMS r
-                  ORDER BY d.DEPT_ID, r.ROOM_ID
-                  LIMIT 20",
-    ],
-    "Self Join" => [
-        "description" => "Finds distinct pairs of rooms located in the same building.",
-        "sql" => "SELECT r1.BUILDING, r1.ROOM_ID AS ROOM_ONE,
-                         r2.ROOM_ID AS ROOM_TWO,
-                         r1.CAPACITY AS ROOM_ONE_CAPACITY,
-                         r2.CAPACITY AS ROOM_TWO_CAPACITY
-                  FROM ROOMS r1
-                  INNER JOIN ROOMS r2
-                    ON r1.BUILDING = r2.BUILDING
-                   AND r1.ROOM_ID < r2.ROOM_ID
-                  ORDER BY r1.BUILDING, r1.ROOM_ID, r2.ROOM_ID",
-    ],
-    "AVG / MIN / MAX with HAVING" => [
-        "description" => "Summarizes rooms by building and keeps buildings whose average capacity is at least 20.",
-        "sql" => "SELECT BUILDING, COUNT(*) AS ROOM_COUNT,
-                         AVG(CAPACITY) AS AVERAGE_CAPACITY,
-                         MIN(CAPACITY) AS MINIMUM_CAPACITY,
-                         MAX(CAPACITY) AS MAXIMUM_CAPACITY
-                  FROM ROOMS
-                  GROUP BY BUILDING
-                  HAVING AVG(CAPACITY) >= 20
-                  ORDER BY AVERAGE_CAPACITY DESC, BUILDING",
-    ],
-    "Joined Aggregate Summary" => [
-        "description" => "Combines COUNT, AVG, MIN, MAX, GROUP BY, HAVING, and multiple joins by department.",
-        "sql" => "SELECT d.DEPT_ID, d.DEPT_NAME,
-                         COUNT(DISTINCT st.STUDENT_ID) AS STUDENT_COUNT,
-                         COUNT(DISTINCT er.REGISTR_ID) AS REGISTRATION_COUNT,
-                         AVG(r.CAPACITY) AS AVERAGE_ROOM_CAPACITY,
-                         MIN(r.CAPACITY) AS SMALLEST_ASSIGNED_ROOM,
-                         MAX(r.CAPACITY) AS LARGEST_ASSIGNED_ROOM
-                  FROM DEPARTMENT d
-                  LEFT JOIN STUDENTS st ON st.DEPT_ID = d.DEPT_ID
-                  LEFT JOIN EXAM_REGISTRATION er ON er.STUDENT_ID = st.STUDENT_ID
-                  LEFT JOIN ROOM_ALLOCATION ra ON ra.REGISTR_ID = er.REGISTR_ID
-                  LEFT JOIN ROOMS r ON r.ROOM_ID = ra.ROOM_ID
-                  GROUP BY d.DEPT_ID, d.DEPT_NAME
-                  HAVING COUNT(DISTINCT st.STUDENT_ID) > 0
-                  ORDER BY STUDENT_COUNT DESC, d.DEPT_ID",
-    ],
-];
+$exams = $pdo->query(
+    "SELECT e.EXAM_ID,e.EXAM_DATE,e.START_TIME,s.SUBJECT_NAME FROM EXAMINATION e JOIN SUBJECT s ON s.SUBJECT_ID=e.SUBJECT_ID ORDER BY (e.EXAM_DATE>=CURDATE()) DESC,e.EXAM_DATE DESC,e.START_TIME DESC",
+)->fetchAll();
+$requestedExam = $_GET["exam_id"] ?? "";
+$selectedExamId = "";
+if (is_string($requestedExam) && $requestedExam !== "") {
+    foreach ($exams as $examOption) {
+        if ((string) $examOption["EXAM_ID"] === $requestedExam) {
+            $selectedExamId = $requestedExam;
+            break;
+        }
+    }
+}
+if ($selectedExamId === "" && $exams) {
+    $selectedExamId = (string) $exams[0]["EXAM_ID"];
+}
 
-$results = [];
-foreach ($labQueries as $title => $definition) {
-    try {
-        $statement = $pdo->query($definition["sql"]);
-        $rows = $statement->fetchAll();
-        $columns = $rows ? array_keys($rows[0]) : [];
-        $results[$title] = [
-            "description" => $definition["description"],
-            "sql" => preg_replace('/\s+/', ' ', trim($definition["sql"])),
-            "rows" => $rows,
-            "columns" => $columns,
-            "error" => null,
-        ];
-    } catch (Throwable $ex) {
-        // Keep one unsupported/empty optional example from breaking the page.
-        $results[$title] = [
-            "description" => $definition["description"],
-            "sql" => preg_replace('/\s+/', ' ', trim($definition["sql"])),
-            "rows" => [],
-            "columns" => [],
-            "error" => $ex->getMessage(),
-        ];
+$overview = null;
+$roomRows = [];
+$uncoveredRoomCount = 0;
+if ($selectedExamId !== "") {
+    $overviewQuery = $pdo->prepare(
+        "SELECT e.EXAM_ID,e.EXAM_DATE,e.START_TIME,e.END_TIME,s.SUBJECT_NAME,d.DEPT_NAME,COALESCE(regs.registered,0) registered,COALESCE(seats.allocated,0) allocated,COALESCE(regs.registered,0)-COALESCE(seats.allocated,0) unallocated,COALESCE(seats.present,0) present,COALESCE(seats.absent,0) absent,COALESCE(seats.unmarked,0) unmarked,COALESCE(seats.allocated_rooms,0) allocated_rooms,COALESCE(duties.duty_count,0) duty_count FROM EXAMINATION e JOIN SUBJECT s ON s.SUBJECT_ID=e.SUBJECT_ID JOIN DEPARTMENT d ON d.DEPT_ID=s.DEPT_ID LEFT JOIN (SELECT EXAM_ID,COUNT(*) registered FROM EXAM_REGISTRATION GROUP BY EXAM_ID) regs ON regs.EXAM_ID=e.EXAM_ID LEFT JOIN (SELECT er.EXAM_ID,COUNT(ra.ALLOCATION_ID) allocated,COUNT(DISTINCT ra.ROOM_ID) allocated_rooms,SUM(CASE WHEN LOWER(a.status)='present' THEN 1 ELSE 0 END) present,SUM(CASE WHEN LOWER(a.status)='absent' THEN 1 ELSE 0 END) absent,SUM(CASE WHEN ra.ALLOCATION_ID IS NOT NULL AND a.attendance_id IS NULL THEN 1 ELSE 0 END) unmarked FROM EXAM_REGISTRATION er LEFT JOIN ROOM_ALLOCATION ra ON ra.REGISTR_ID=er.REGISTR_ID LEFT JOIN attendance a ON a.allocation_id=ra.ALLOCATION_ID GROUP BY er.EXAM_ID) seats ON seats.EXAM_ID=e.EXAM_ID LEFT JOIN (SELECT EXAM_ID,COUNT(*) duty_count FROM INVIGILATOR_DUTY GROUP BY EXAM_ID) duties ON duties.EXAM_ID=e.EXAM_ID WHERE e.EXAM_ID=?",
+    );
+    $overviewQuery->execute([$selectedExamId]);
+    $overview = $overviewQuery->fetch();
+
+    $roomQuery = $pdo->prepare(
+        "SELECT r.ROOM_ID,r.BUILDING,r.FLOOR,r.CAPACITY,r.STATUS,COALESCE(a.exam_seats,0) exam_seats,COALESCE(a.all_exam_seats,0) all_exam_seats,GREATEST(r.CAPACITY-COALESCE(a.all_exam_seats,0),0) free_seats,COALESCE(d.duty_count,0) duty_count,COALESCE(d.invigilator_names,'—') invigilator_names FROM ROOMS r LEFT JOIN (SELECT ra.ROOM_ID,SUM(CASE WHEN er.EXAM_ID=? THEN 1 ELSE 0 END) exam_seats,COUNT(*) all_exam_seats FROM ROOM_ALLOCATION ra JOIN EXAM_REGISTRATION er ON er.REGISTR_ID=ra.REGISTR_ID GROUP BY ra.ROOM_ID) a ON a.ROOM_ID=r.ROOM_ID LEFT JOIN (SELECT duty.ROOM_ID,COUNT(DISTINCT duty.INVIGILATOR_ID) duty_count,GROUP_CONCAT(DISTINCT i.INVIGILATOR_NAME ORDER BY i.INVIGILATOR_NAME SEPARATOR ', ') invigilator_names FROM INVIGILATOR_DUTY duty JOIN INVIGILATOR i ON i.INVIGILATOR_ID=duty.INVIGILATOR_ID WHERE duty.EXAM_ID=? GROUP BY duty.ROOM_ID) d ON d.ROOM_ID=r.ROOM_ID ORDER BY (r.STATUS='AVAILABLE') DESC,r.ROOM_ID",
+    );
+    $roomQuery->execute([$selectedExamId, $selectedExamId]);
+    $roomRows = $roomQuery->fetchAll();
+    foreach ($roomRows as $room) {
+        if ((int) $room["exam_seats"] > 0 && (int) $room["duty_count"] === 0) {
+            $uncoveredRoomCount++;
+        }
     }
 }
 
@@ -110,43 +48,62 @@ include "partials.php";
 <main class="content">
   <div class="content-title">
     <div>
-      <span class="eyebrow">DATABASE LAB</span>
-      <h1>SQL Joins &amp; Aggregates</h1>
-      <p>Live, read-only examples using the ExamSphere database. No records are changed.</p>
+      <span class="eyebrow">EXAM OPERATIONS</span>
+      <h1>Readiness &amp; Capacity</h1>
+      <p>Use joined registration, seating, room, duty, and attendance data to find and resolve exam-day gaps.</p>
     </div>
     <div class="title-actions"><a class="btn ghost" href="dashboard.php">← Dashboard</a></div>
   </div>
 
-  <section class="panel">
-    <div class="panel-head"><div><h2>Coverage</h2><p>All examples run when this page loads using the current database contents.</p></div><span class="badge">SELECT only</span></div>
-    <div class="dash-cards" style="margin:0">
-      <div class="dash-card cyan"><span>RIGHT JOIN</span><b>Live</b><small>Rooms and allocations</small></div>
-      <div class="dash-card blue"><span>FULL OUTER</span><b>Live</b><small>UNION-based MySQL emulation</small></div>
-      <div class="dash-card violet"><span>CROSS / SELF</span><b>Live</b><small>Planning and room comparisons</small></div>
-      <div class="dash-card green"><span>AGGREGATES</span><b>Live</b><small>AVG, MIN, MAX, HAVING</small></div>
-    </div>
-  </section>
-
-  <?php foreach ($results as $title => $result): ?>
+  <?php if (!$exams): ?>
+    <section class="panel"><div class="empty">Create an examination to see its operational readiness.</div><a class="btn primary" href="manage.php?table=EXAMINATION">Schedule an examination</a></section>
+  <?php else: ?>
     <section class="panel">
-      <div class="panel-head">
-        <div><h2><?= e($title) ?></h2><p><?= e($result["description"]) ?></p></div>
-        <span class="badge"><?= $result["error"] ? "Unavailable" : count($result["rows"]) . " row(s)" ?></span>
-      </div>
-      <details>
-        <summary class="link" style="cursor:pointer;font-size:12px;margin-bottom:12px">View SQL query</summary>
-        <pre style="white-space:pre-wrap;overflow:auto;background:#081626;border:1px solid var(--line);border-radius:9px;padding:14px;color:#b8d5ee;font-size:11px;line-height:1.6"><?= e($result["sql"]) ?></pre>
-      </details>
-      <?php if ($result["error"]): ?>
-        <div class="alert danger">This example could not be executed: <?= e($result["error"]) ?></div>
-      <?php elseif (!$result["rows"]): ?>
-        <div class="empty">The query ran successfully but returned no rows for the current data.</div>
-      <?php else: ?>
-        <div class="table-wrap"><table><thead><tr><?php foreach ($result["columns"] as $column): ?><th><?= e(str_replace("_", " ", $column)) ?></th><?php endforeach; ?></tr></thead><tbody>
-          <?php foreach ($result["rows"] as $row): ?><tr><?php foreach ($result["columns"] as $column): ?><td><?= e($row[$column] ?? "—") ?></td><?php endforeach; ?></tr><?php endforeach; ?>
-        </tbody></table></div>
-      <?php endif; ?>
+      <form method="get" class="filter">
+        <label>Examination<select name="exam_id" required><?php foreach ($exams as $examOption): ?><option value="<?= e($examOption["EXAM_ID"]) ?>" <?= $selectedExamId === (string) $examOption["EXAM_ID"] ? "selected" : "" ?>><?= e($examOption["EXAM_DATE"]) ?> · <?= e($examOption["SUBJECT_NAME"]) ?> (#<?= e($examOption["EXAM_ID"]) ?>)</option><?php endforeach; ?></select></label>
+        <button class="btn primary" type="submit">View readiness</button>
+      </form>
     </section>
-  <?php endforeach; ?>
+
+    <?php if ($overview): ?>
+      <?php
+      $examStarted = $overview["EXAM_DATE"] < date("Y-m-d")
+          || ($overview["EXAM_DATE"] === date("Y-m-d") && $overview["START_TIME"] <= date("H:i:s"));
+      $examEnded = $overview["EXAM_DATE"] < date("Y-m-d")
+          || ($overview["EXAM_DATE"] === date("Y-m-d") && $overview["END_TIME"] <= date("H:i:s"));
+      $readinessIssues = (int) $overview["unallocated"] + $uncoveredRoomCount;
+      ?>
+      <section class="panel operations-exam">
+        <div class="panel-head"><div><h2><?= e($overview["SUBJECT_NAME"]) ?></h2><p><?= e($overview["DEPT_NAME"]) ?> · Exam #<?= e($overview["EXAM_ID"]) ?> · <?= e(date("D, d M Y", strtotime($overview["EXAM_DATE"]))) ?> · <?= e(substr($overview["START_TIME"], 0, 5)) ?>–<?= e(substr($overview["END_TIME"], 0, 5)) ?></p></div><span class="badge <?= $readinessIssues === 0 ? "ready" : "needs-attention" ?>"><?= $readinessIssues === 0 ? "Ready" : e($readinessIssues) . " issue(s)" ?></span></div>
+        <div class="operations-actions"><a class="btn primary" href="allocation.php?exam_id=<?= urlencode($selectedExamId) ?>">Allocate unassigned students</a><a class="btn ghost" href="manage.php?table=INVIGILATOR_DUTY&amp;exam_id=<?= urlencode($selectedExamId) ?>">Assign invigilators</a><a class="btn ghost" href="seating.php?exam_id=<?= urlencode($selectedExamId) ?>">Open seating plan</a></div>
+      </section>
+
+      <section class="operations-metrics">
+        <article class="operations-metric"><span>Registered</span><b><?= e($overview["registered"]) ?></b><small>Student registrations</small></article>
+        <article class="operations-metric"><span>Seats assigned</span><b><?= e($overview["allocated"]) ?></b><small><?= e($overview["allocated_rooms"]) ?> room(s) used</small></article>
+        <article class="operations-metric <?= (int) $overview["unallocated"] > 0 ? "attention" : "" ?>"><span>Need seats</span><b><?= e($overview["unallocated"]) ?></b><small><?= (int) $overview["unallocated"] > 0 ? "Allocate before the exam" : "All registered students have seats" ?></small></article>
+        <article class="operations-metric <?= $uncoveredRoomCount > 0 ? "attention" : "" ?>"><span>Rooms without invigilator</span><b><?= e($uncoveredRoomCount) ?></b><small><?= e($overview["duty_count"]) ?> duty(s) assigned</small></article>
+        <article class="operations-metric"><span>Attendance</span><b><?= e($overview["present"]) ?> / <?= e($overview["registered"]) ?></b><small><?= e($overview["absent"]) ?> absent · <?= e($overview["unmarked"]) ?> unmarked<?= $examStarted ? "" : " · opens at start time" ?></small></article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2>Room capacity &amp; invigilator coverage</h2><p>Seat usage for this exam and total remaining seats across all current allocations.</p></div></div>
+        <?php if (!$roomRows): ?><div class="empty">Add rooms to plan exam seating.</div><?php else: ?>
+          <div class="table-wrap"><table><thead><tr><th>Room</th><th>Status</th><th>Capacity</th><th>This exam</th><th>Free seats</th><th>Invigilators</th><th>Action</th></tr></thead><tbody>
+          <?php foreach ($roomRows as $room): ?>
+            <?php $needsDuty = (int) $room["exam_seats"] > 0 && (int) $room["duty_count"] === 0; ?>
+            <tr><td><b><?= e($room["ROOM_ID"]) ?></b><small><?= e($room["BUILDING"] ?: "Building not set") ?> · Floor <?= e($room["FLOOR"] ?: "—") ?></small></td><td><?= e($room["STATUS"]) ?></td><td><?= e($room["CAPACITY"]) ?></td><td><?= e($room["exam_seats"]) ?> seat(s)</td><td><?= e($room["free_seats"]) ?></td><td><?= e($room["invigilator_names"]) ?></td><td><?= $needsDuty ? '<a class="link" href="manage.php?table=INVIGILATOR_DUTY&amp;exam_id=' . urlencode($selectedExamId) . '">Assign duty</a>' : ((int) $room["exam_seats"] > 0 ? "Covered" : "Not used") ?></td></tr>
+          <?php endforeach; ?>
+          </tbody></table></div>
+        <?php endif; ?>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2>Registration &amp; attendance</h2><p>Joined student-level register for the selected examination.</p></div><a href="reports.php?exam_id=<?= urlencode($selectedExamId) ?>">Open reports →</a></div>
+        <div class="operations-actions"><span class="badge">Exam status: <?= $examEnded ? "Completed" : ($examStarted ? "In progress" : "Upcoming") ?></span><span class="badge">Invigilator duties: <?= e($overview["duty_count"]) ?></span><span class="badge">Rooms with assigned seats: <?= e($overview["allocated_rooms"]) ?></span></div>
+        <p class="hint">Invigilators record present/absent from their portal. Attendance and room assignments update here automatically.</p>
+      </section>
+    <?php endif; ?>
+  <?php endif; ?>
 </main>
 <?php include "end.php"; ?>

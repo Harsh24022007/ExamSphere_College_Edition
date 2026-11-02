@@ -117,12 +117,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         flash('danger', 'Allocation failed: ' . $ex->getMessage());
     }
-    redirect('allocation.php');
+    redirect('allocation.php?exam_id=' . urlencode((string) $exam));
 }
 
 $exams = $pdo->query(
     'SELECT e.EXAM_ID,e.EXAM_DATE,s.SUBJECT_NAME FROM EXAMINATION e JOIN SUBJECT s ON e.SUBJECT_ID=s.SUBJECT_ID ORDER BY e.EXAM_DATE DESC',
 )->fetchAll();
+$selectedExamId = $_GET['exam_id'] ?? '';
+if (!is_string($selectedExamId)) {
+    $selectedExamId = '';
+} else {
+    $validExamIds = array_map(
+        static fn (array $examOption): string => (string) $examOption['EXAM_ID'],
+        $exams,
+    );
+    if (!in_array($selectedExamId, $validExamIds, true)) {
+        $selectedExamId = '';
+    }
+}
 $rooms = $pdo->query('SELECT * FROM ROOMS ORDER BY ROOM_ID')->fetchAll();
 $regs = $pdo->query(
     "SELECT er.REGISTR_ID,er.EXAM_ID,er.STUDENT_ID,CONCAT_WS(' ',s.FNAME,s.MNAME,s.LNAME) NAME FROM EXAM_REGISTRATION er JOIN STUDENTS s ON s.STUDENT_ID=er.STUDENT_ID LEFT JOIN ROOM_ALLOCATION ra ON ra.REGISTR_ID=er.REGISTR_ID WHERE ra.REGISTR_ID IS NULL ORDER BY er.REGISTR_ID",
@@ -137,7 +149,7 @@ include 'partials.php';
 <div class="two-col">
 <section class="panel"><div class="panel-head"><h2>Automatic Allocation</h2></div><form method="post" class="stack"><input type="hidden" name="csrf_token" value="<?= e(
     csrf_token(),
-) ?>"><input type="hidden" name="mode" value="auto"><label>Examination<select name="exam_id" required><option value="">Choose an examination</option><?php foreach ($exams as $examOption): ?><option value="<?= $examOption['EXAM_ID'] ?>">#<?= $examOption['EXAM_ID'] ?> — <?= e(
+) ?>"><input type="hidden" name="mode" value="auto"><label>Examination<select name="exam_id" required><option value="">Choose an examination</option><?php foreach ($exams as $examOption): ?><option value="<?= e($examOption['EXAM_ID']) ?>" <?= $selectedExamId === (string) $examOption['EXAM_ID'] ? 'selected' : '' ?>>#<?= e($examOption['EXAM_ID']) ?> — <?= e(
     $examOption['SUBJECT_NAME'],
 ) ?> (<?= e(
     $examOption['EXAM_DATE'],
@@ -147,10 +159,10 @@ include 'partials.php';
 <section class="panel"><div class="panel-head"><h2>Manual Allocation</h2></div><form method="post" class="form-grid compact"><input type="hidden" name="csrf_token" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="mode" value="manual">
-<label>Examination<select name="exam_id" id="allocation-exam" required><option value="">Choose</option><?php foreach ($exams as $examOption): ?><option value="<?= $examOption['EXAM_ID'] ?>">#<?= $examOption['EXAM_ID'] ?> — <?= e(
+<label>Examination<select name="exam_id" id="allocation-exam" required><option value="">Choose</option><?php foreach ($exams as $examOption): ?><option value="<?= e($examOption['EXAM_ID']) ?>" <?= $selectedExamId === (string) $examOption['EXAM_ID'] ? 'selected' : '' ?>>#<?= e($examOption['EXAM_ID']) ?> — <?= e(
     $examOption['SUBJECT_NAME'],
 ) ?></option><?php endforeach; ?></select></label>
-<label>Registration<select name="registr_id" id="allocation-registration" required><option value="">Choose exam first</option><?php foreach ($regs as $registration): ?><option value="<?= $registration['REGISTR_ID'] ?>" data-exam="<?= $registration['EXAM_ID'] ?>">#<?= $registration['REGISTR_ID'] ?> — <?= e(
+<label>Registration<select name="registr_id" id="allocation-registration" required><option value=""><?= $selectedExamId !== '' ? 'No unassigned registrations for this examination' : 'Choose exam first' ?></option><?php foreach ($regs as $registration): ?><option value="<?= $registration['REGISTR_ID'] ?>" data-exam="<?= $registration['EXAM_ID'] ?>">#<?= $registration['REGISTR_ID'] ?> — <?= e(
     $registration['NAME'],
 ) ?> / Exam <?= $registration['EXAM_ID'] ?></option><?php endforeach; ?></select></label>
 <label>Room<select name="room_id" required><option value="">Choose an available room</option><?php foreach ($rooms as $room):

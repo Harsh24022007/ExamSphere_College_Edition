@@ -29,18 +29,12 @@ function navActive($needle)
   <a href="analytics.php" class="<?= navActive(
       "analytics.php",
   ) ?>"><span>◒</span> Department Analytics</a>
-  <a href="allocation.php" class="<?= navActive(
-      "allocation.php",
-  ) ?>"><span>▦</span> Seat Allocation</a>
-  <a href="seating.php" class="<?= navActive(
-      "seating.php",
-  ) ?>"><span>⊞</span> Visual Seating</a>
   <a href="reports.php" class="<?= navActive(
       "reports.php",
   ) ?>"><span>▤</span> Reports & Exports</a>
   <a href="sql_lab.php" class="<?= navActive(
       "sql_lab.php",
-  ) ?>"><span>⌘</span> SQL Joins & Aggregates</a>
+  ) ?>"><span>⌘</span> Exam Operations</a>
   <a href="invigilator_requests.php" class="<?= navActive(
       "invigilator_requests.php",
   ) ?>"><span>✓</span> Invigilator Requests</a>

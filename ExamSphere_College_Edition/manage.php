@@ -54,6 +54,10 @@ if (!isset($schemas[$table])) {
 }
 $cols = $schemas[$table];
 $pk = $cols[0];
+$prefillExamId = $_GET['exam_id'] ?? '';
+if (!is_string($prefillExamId)) {
+    $prefillExamId = '';
+}
 $pdo = db();
 
 function fieldType($c)
@@ -697,7 +701,7 @@ endif; ?>
         $c,
     ) ?>" required><option value="">Choose…</option><?php foreach ($options as $option): ?><option value="<?= e(
         $option['id'],
-    ) ?>" <?= (string) ($edit[$c] ?? '') === (string) $option['id'] ? 'selected' : '' ?>><?= e(
+    ) ?>" <?= (string) ($edit[$c] ?? ($table === 'INVIGILATOR_DUTY' && $c === 'EXAM_ID' ? $prefillExamId : '')) === (string) $option['id'] ? 'selected' : '' ?>><?= e(
         $option['label'],
     ) ?></option><?php endforeach; ?></select>
 <?php elseif ($c === 'STATUS'): ?><select name="<?= e($c) ?>" required><?php foreach ([
