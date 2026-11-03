@@ -98,6 +98,8 @@ The current implementation includes:
 
 - Student and invigilator linked account management.
 
+- Invigilator access requests, administrator approval/rejection, and account claim.
+
 - Examination registration from the student portal.
 
 - Manual room allocation.
@@ -107,6 +109,8 @@ The current implementation includes:
 - Visual seat map and seat movement.
 
 - Invigilator duty viewing.
+
+- Attendance marking by assigned invigilators after an examination starts.
 
 - Department analytics.
 
@@ -118,9 +122,7 @@ The current implementation includes:
 
 ### 4.2 Out-of-scope or optional areas
 
-The following areas are either optional, only partially represented, or not implemented as complete modules:
-
-- Attendance management is referenced by migration and deletion logic, but its complete table definition is not included in the fresh-install schema.
+The following areas are not implemented as complete modules:
 
 - Email, SMS, or push notifications are not implemented.
 
@@ -181,7 +183,8 @@ Important controllers include:
 | `login.php` | Shared authentication entry point |
 | `student_register.php` | Student profile and account creation |
 | `student_portal.php` | Student eligibility, registration, and timetable |
-| `invigilator_portal.php` | Invigilator duty schedule and history |
+| `invigilator_register.php`, `invigilator_requests.php` | Invigilator applications, administrator review, and account claim workflow |
+| `invigilator_portal.php` | Invigilator duty schedule, history, and attendance marking |
 | `dashboard.php` | Administrator overview and counts |
 | `manage.php` | Generic administrator CRUD controller |
 | `allocation.php` | Manual and automatic seat allocation |
@@ -228,14 +231,24 @@ The fresh-install schema creates the `exam_room_allocation_system` database.
 | `EXAM_REGISTRATION` | Student-to-examination registrations | Links `STUDENTS` and `EXAMINATION` |
 | `ROOM_ALLOCATION` | Assigned room and seat for a registration | Links registration to room |
 | `INVIGILATOR_DUTY` | Invigilator assignment by exam and room | Links exam, invigilator, and room |
-| `users` | Student, invigilator, and optional admin application accounts | Optionally links to student/invigilator profiles |
+| `users` | Student, invigilator, and optional unified application accounts | Optionally links to student/invigilator profiles |
+| `attendance` | Present/absent attendance against an allocated seat | Links to a room allocation and optionally the user who checked it |
+| `INVIGILATOR_REQUEST` | Invigilator access applications and review status | Stores a nullable approved invigilator ID; the schema does not declare this as a foreign key |
 | `ADMIN_USERS` | Separate administrator authentication table | Stores administrator credentials |
-| `attendance` | Optional existing deployment table | Referenced by migration/deletion logic but not defined in fresh schema |
 
 ### 6.2 Relationship model
 
 ```mermaid
 erDiagram
+    INVIGILATOR_REQUEST {
+        INT REQUEST_ID PK
+        VARCHAR FULL_NAME
+        VARCHAR EMAIL
+        VARCHAR CLAIM_CODE_HASH
+        VARCHAR STATUS
+        INT INVIGILATOR_ID "NULLABLE; NO FOREIGN KEY"
+    }
+
     DEPARTMENT ||--o{ SUBJECT : offers
     DEPARTMENT ||--o{ STUDENTS : contains
     SUBJECT ||--o{ EXAMINATION : schedules
@@ -248,7 +261,11 @@ erDiagram
     ROOMS ||--o{ INVIGILATOR_DUTY : hosts
     STUDENTS ||--o| users : links
     INVIGILATOR ||--o| users : links
+    ROOM_ALLOCATION ||--o| attendance : records
+    users o|--o{ attendance : checks
 ```
+
+`INVIGILATOR_REQUEST.INVIGILATOR_ID` records the profile created on approval, but the fresh-install schema does not define a foreign-key constraint for that column.
 
 ### 6.3 Integrity constraints
 
@@ -263,6 +280,8 @@ The database design applies several important constraints:
 - `UNIQUE(REGISTR_ID)` in `ROOM_ALLOCATION` ensures a registration receives at most one allocation.
 
 - `UNIQUE(ROOM_ID, SEAT_NO)` prevents a room/seat pair from being assigned more than once globally under the supplied schema.
+- `UNIQUE(attendance.allocation_id)` allows at most one attendance record per seat allocation.
+- Attendance status is constrained to `present` or `absent`.
 
 - Unique usernames prevent duplicate account names.
 
@@ -431,7 +450,7 @@ Features include:
 
 - Foreign-key blocker reporting on failed deletes.
 
-For department deletion, the controller gathers related students, subjects, examinations, registrations, allocations, optional attendance rows, duties, and linked user accounts. It then deletes related data inside a transaction and displays a deletion report showing counts and affected identifiers.
+For department deletion, the controller gathers related students, subjects, examinations, registrations, allocations, attendance rows, duties, and linked user accounts. It then deletes related data inside a transaction and displays a deletion report showing counts and affected identifiers.
 
 ### 7.7 Manual and automatic allocation
 
@@ -496,6 +515,8 @@ The page also supports printing the room plan.
 - Scheduled versus completed status.
 
 Completed status is calculated from the examination date and end time. The portal does not expose other invigilators’ duties.
+
+Invigilators first submit an access request. An administrator can approve or reject pending requests. Approval creates an invigilator profile; the applicant can then claim it using the one-time request code and choose sign-in credentials. Once signed in, an assigned invigilator can record `present` or `absent` for students allocated to their room after the examination starts. Attendance is linked to the seat allocation and appears in student history and administrator summaries.
 
 ### 7.10 Analytics
 
@@ -682,7 +703,7 @@ The following issues should be addressed before production use:
 
 1. **Error disclosure:** Some administrator error paths include database exception messages in flash messages. These are useful during development but should be logged server-side and replaced with safer user-facing messages in production.
 
-1. **Manual identifier generation:** Registration and allocation IDs are generated using `COALESCE(MAX(...),0)+1`. Concurrent requests can calculate the same next value. Auto-increment keys or a database sequence strategy is safer.
+1. **Generated examination and duty identifiers:** Student, invigilator, registration, and allocation numeric identifiers use auto-increment columns in the current schema. Examination and duty IDs are generated in application code; concurrent creation of equivalent IDs should be covered by tests, with database uniqueness constraints serving as the final integrity check.
 
 1. **Input validation breadth:** The application validates many lengths and numeric values, but production deployments should add stronger username character rules, email validation, date/time consistency checks, and business rules such as `END_TIME > START_TIME`.
 
@@ -692,7 +713,7 @@ The following issues should be addressed before production use:
 
 1. **CSRF coverage review:** State-changing forms already include CSRF tokens, but every future administrative endpoint should preserve the same pattern.
 
-1. **Attendance dependency:** The cascade migration expects an `attendance` table that is not present in the clean schema. Deployment scripts should explicitly distinguish optional legacy tables from required fresh-install tables.
+1. **Existing-database migrations:** The fresh-install schema includes `attendance` and `INVIGILATOR_REQUEST`. The attendance/invigilator-approval migration remains an upgrade script for older databases and should be run only after reviewing its preflight checks.
 
 1. **Concurrency testing:** Allocation and registration paths should be tested under simultaneous requests.
 
@@ -741,7 +762,7 @@ sequenceDiagram
 
 ### 10.3 Department deletion workflow
 
-The department deletion logic is deliberately more comprehensive than a single `DELETE` statement. It identifies dependent students, subjects, examinations, registrations, allocations, optional attendance rows, duties, and linked user accounts. It deletes in dependency-safe order, commits as one operation, and presents a report of deleted records.
+The department deletion logic is deliberately more comprehensive than a single `DELETE` statement. It identifies dependent students, subjects, examinations, registrations, allocations, attendance rows, duties, and linked user accounts. It deletes in dependency-safe order, commits as one operation, and presents a report of deleted records.
 
 This is useful for an academic project because it demonstrates transaction boundaries, dependency discovery, foreign-key-aware cleanup, and user feedback after destructive operations.
 
@@ -769,11 +790,11 @@ For existing databases:
 
 - Run `student_id_autoincrement_migration.sql` if existing student records require auto-generated IDs for future registrations.
 
-- Run `cascade_delete_migration.sql` only when the expected existing `attendance` table and foreign-key names are present.
+- Review and run only the migrations required to upgrade the existing schema. If both attendance/invigilator approval and cascade deletion upgrades are needed, run `attendance_invigilator_approval_migration.sql` before `cascade_delete_migration.sql`.
 
 - Back up the database before running migrations.
 
-The repository includes both an original `db_setup.sql` and a cleaned schema artifact under `outputs`. Deployment teams should select one authoritative schema and document its compatibility with the target MySQL/MariaDB version.
+Use the root-level `db_setup.sql` and `auth.sql` as the fresh-install schema sources. Supplemental schema and ER artifacts under `outputs` are reference materials and may not include the latest application tables.
 
 ---
 
@@ -862,7 +883,7 @@ PHP CLI syntax validation was not available in the current terminal environment 
 
 ### 14.1 Immediate improvements
 
-- Replace `MAX()+1` ID generation with auto-increment columns or safe sequence logic.
+- Add concurrency-focused tests and collision handling for application-generated examination and duty IDs.
 
 - Move all production credentials to environment variables and remove demo credentials from public screens.
 
@@ -878,7 +899,7 @@ PHP CLI syntax validation was not available in the current terminal environment 
 
 ### 14.2 Medium-term improvements
 
-- Create a dedicated attendance module and include its table in the canonical schema.
+- Extend attendance analytics and reporting, including exports and audit history.
 
 - Add examination capacity planning and registration counts to the dashboard.
 
@@ -942,4 +963,3 @@ For an academic submission, the project provides a strong foundation for explain
 ## Appendix B — Demonstration Credentials and Deployment Warning
 
 The local development materials include a demo administrator account. This is useful for classroom demonstration, but it must be changed or removed before any public, shared, or production deployment. Database credentials should be supplied through environment variables or a protected server configuration and should not be committed to a public repository.
-

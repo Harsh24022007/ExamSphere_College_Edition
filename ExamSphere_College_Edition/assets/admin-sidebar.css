@@ -1,0 +1,11 @@
+.app-shell .sidebar{transition:transform .2s ease}
+.app-shell .app-main{transition:margin-left .2s ease,width .2s ease}
+.app-shell.sidebar-hidden .sidebar{transform:translateX(-100%)}
+.app-shell.sidebar-hidden .app-main{margin-left:0;width:100%}
+.app-shell .sidebar-toggle{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:1px solid #e1e6ed;border-radius:8px;background:#fff;color:#344256;font-size:19px;cursor:pointer}
+.app-shell .sidebar-toggle:hover{background:#f4f7fb}
+.app-shell .sidebar-toggle:focus-visible{outline:2px solid #397ff0;outline-offset:2px}
+
+@media(max-width:800px){
+  .app-shell.sidebar-hidden .sidebar.open{transform:none}
+}

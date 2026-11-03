@@ -16,6 +16,7 @@ function navActive($needle)
  <title>ExamSphere | Academic Administration</title>
  <link rel="stylesheet" href="assets/style.css">
  <link rel="stylesheet" href="assets/workflow.css">
+ <link rel="stylesheet" href="assets/admin-sidebar.css">
 </head>
 <body>
 <div class="app-shell">
@@ -49,7 +50,7 @@ function navActive($needle)
     admin_name(),
 ) ?></b><small>Administrator</small></div></div><a href="logout.php?role=admin" class="logout">↪ Sign out</a></div>
 </aside>
-<div class="app-main"><header class="appbar"><button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button><div><span class="eyebrow">EXAMINATION MANAGEMENT</span><strong>Academic Administration</strong></div><div class="appbar-right"><span class="live-dot"></span> MySQL Connected <a href="index.php" class="home-mini">Home</a></div><a href="logout.php?role=admin" class="admin-signout-top">Sign out</a></header>
+<div class="app-main"><header class="appbar"><button class="hamburger sidebar-toggle" id="sidebar-toggle" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Hide admin navigation" title="Hide admin navigation">☰</button><div><span class="eyebrow">EXAMINATION MANAGEMENT</span><strong>Academic Administration</strong></div><div class="appbar-right"><span class="live-dot"></span> MySQL Connected <a href="index.php" class="home-mini">Home</a></div><a href="logout.php?role=admin" class="admin-signout-top">Sign out</a></header>
 <?php if ($f = getFlash()): ?><div class="toast <?= $f["type"] ?>"><?= e(
     $f["message"],
 ) ?></div><?php endif; ?>
